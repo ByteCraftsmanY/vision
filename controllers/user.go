@@ -6,6 +6,7 @@ import (
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
 	"net/http"
+	"strings"
 	"vision/forms"
 	"vision/models"
 	"vision/utils/token"
@@ -40,7 +41,7 @@ func (c UserController) Store(ctx *gin.Context) {
 		return
 	}
 	user, err := userModel.SignUp(form)
-	if errors.Is(err, gocql.ErrHostAlreadyExists) {
+	if err != nil && strings.Contains(err.Error(), "exists") {
 		ctx.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	} else if err != nil {

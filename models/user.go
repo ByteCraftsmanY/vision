@@ -7,6 +7,7 @@ import (
 	"github.com/scylladb/gocqlx/v2/table"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
+	"sync"
 	"time"
 	"vision/db"
 	"vision/forms"
@@ -23,16 +24,16 @@ var userMetaData = table.Metadata{
 var userTable = table.New(userMetaData)
 
 type User struct {
-	ID       gocql.UUID
-	Name     string
-	Email    string
-	Password string `json:"-"`
-	Phone    string
-	Address  string
-	City     string
-	State    string
-	Country  string
-	Active   bool
+	ID       gocql.UUID `json:"id,omitempty"`
+	Name     string     `json:"name,omitempty"`
+	Email    string     `json:"email,omitempty"`
+	Password string     `json:"-"`
+	Phone    string     `json:"phone,omitempty"`
+	Address  string     `json:"address,omitempty"`
+	City     string     `json:"city,omitempty"`
+	State    string     `json:"state,omitempty"`
+	Country  string     `json:"country,omitempty"`
+	Active   bool       `json:"active,omitempty"`
 }
 
 func (u *User) SignUp(form *forms.UserSignUp) (*User, error) {
@@ -44,6 +45,10 @@ func (u *User) SignUp(form *forms.UserSignUp) (*User, error) {
 		Phone:    form.Phone,
 		Country:  form.Country,
 		Active:   true,
+	}
+
+	if exists, err := user.isExists(); exists {
+		return nil, err
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -107,4 +112,34 @@ func (u *User) LoginCheck(form *forms.Login) (string, error) {
 		return "", err
 	}
 	return token.Generate(user.ID)
+}
+
+func (u *User) isExists() (bool, error) {
+	session := db.GetSession()
+	phoneQuery := qb.Select(userTable.Name()).Where(qb.Eq("phone"))
+	emailQuery := qb.Select(userTable.Name()).Where(qb.Eq("email"))
+
+	userByPhone, userByEmail := User{Phone: u.Phone}, User{Email: u.Email}
+	userByPhoneErr, userByEmailErr := error(nil), error(nil)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func(user *User) {
+		defer wg.Done()
+		userByPhoneErr = session.Query(phoneQuery.ToCql()).BindStruct(user).GetRelease(user)
+	}(&userByPhone)
+	go func(user *User) {
+		defer wg.Done()
+		userByEmailErr = session.Query(emailQuery.ToCql()).BindStruct(user).GetRelease(user)
+	}(&userByEmail)
+	wg.Wait()
+
+	if (userByPhoneErr == nil && len(userByPhone.Name) > 0) && (userByEmailErr == nil && len(userByEmail.Name) > 0) {
+		return true, errors.New("user is already exists with this email and phone number")
+	} else if userByPhoneErr == nil && len(userByPhone.Name) > 0 {
+		return true, errors.New("user is already exists with this phone number")
+	} else if userByEmailErr == nil && len(userByEmail.Name) > 0 {
+		return true, errors.New("user is already exists with this email")
+	}
+	return false, nil
 }

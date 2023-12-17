@@ -1,15 +1,18 @@
 package server
 
 import (
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"time"
 	"vision/controllers"
 	"vision/middlewares"
 )
 
-func NewRouter() *gin.Engine {
+func NewRouter(logger *zap.Logger) *gin.Engine {
 	router := gin.New()
-	router.Use(gin.Recovery())
-	router.Use(gin.Logger())
+	router.Use(ginzap.RecoveryWithZap(logger, true))
+	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 
 	health := new(controllers.HealthController)
 	router.GET("/health", health.Status)

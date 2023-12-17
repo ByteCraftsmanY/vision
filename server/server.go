@@ -10,8 +10,8 @@ import (
 	"vision/config"
 )
 
-func Init(lc fx.Lifecycle, config *config.Configurations) *http.Server {
-	r := NewRouter()
+func Init(lc fx.Lifecycle, logger *zap.Logger, config *config.Configurations) *http.Server {
+	r := NewRouter(logger)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Server.Port),
 		Handler: r,
