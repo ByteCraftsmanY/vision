@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  vision:
+    build: ./
+    environment:
+      - SECRET=rdx123
+    ports:
+      - "8080:8080"
+  scylla:
+    container_name: scylla
+    image: scylladb/scylla:latest
+    command: --smp 2 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./.db_data/scylla1:/var/lib/scylla/data
+volumes:
+  scylla:
+    driver: local
