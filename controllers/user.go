@@ -35,12 +35,12 @@ func (c UserController) Retrieve(ctx *gin.Context) {
 }
 
 func (c UserController) Store(ctx *gin.Context) {
-	form := new(forms.UserSignUp)
+	form := new(forms.User)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := userModel.SignUp(form)
+	user, err := userModel.Add(form)
 	if err != nil && strings.Contains(err.Error(), "exists") {
 		ctx.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return

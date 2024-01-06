@@ -35,6 +35,27 @@ func NewRouter(logger *zap.Logger) *gin.Engine {
 			userGroup.GET("/", user.Retrieve, middlewares.AuthMiddleware())
 			userGroup.POST("/", user.Store)
 		}
+
+		cctvGroup := v1.Group("cctv")
+		{
+			cctv := new(controllers.CCTVController)
+			cctvGroup.GET("/:ID", cctv.Get)
+			cctvGroup.Any("/all", cctv.GetAll)
+			cctvGroup.POST("/", cctv.Add)
+			cctvGroup.PUT("/", cctv.Update)
+			cctvGroup.DELETE("/:ID", cctv.Delete)
+		}
+
+		organizationGroup := v1.Group("organization")
+		{
+			organization := new(controllers.OrganizationController)
+			organizationGroup.GET("/:ID", organization.Get)
+			organizationGroup.Any("/all", organization.GetAll)
+			organizationGroup.POST("/", organization.Add)
+			organizationGroup.PUT("/", organization.Update)
+			organizationGroup.DELETE("/:ID", organization.Delete)
+		}
+
 	}
 	return router
 }

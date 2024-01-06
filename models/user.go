@@ -8,15 +8,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"sync"
-	"time"
 	"vision/db"
 	"vision/forms"
 	"vision/utils/token"
 )
 
 var userMetaData = table.Metadata{
-	Name:    "user",
-	Columns: []string{"id", "name", "email", "password", "phone", "address", "city", "state", "country", "active"},
+	Name: "user",
+	Columns: []string{
+		"uuid", "is_active",
+		"name", "email", "password", "phone",
+		"created_at", "updated_at", "deleted_at",
+	},
 	PartKey: []string{"id"},
 	SortKey: nil,
 }
@@ -24,28 +27,51 @@ var userMetaData = table.Metadata{
 var userTable = table.New(userMetaData)
 
 type User struct {
-	ID       gocql.UUID `json:"id,omitempty"`
-	Name     string     `json:"name,omitempty"`
-	Email    string     `json:"email,omitempty"`
-	Password string     `json:"-"`
-	Phone    string     `json:"phone,omitempty"`
-	Address  string     `json:"address,omitempty"`
-	City     string     `json:"city,omitempty"`
-	State    string     `json:"state,omitempty"`
-	Country  string     `json:"country,omitempty"`
-	Active   bool       `json:"active,omitempty"`
+	base
+	Name            string            `json:"name,omitempty" db:"name"`
+	Phone           string            `json:"phone,omitempty" db:"phone"`
+	Email           string            `json:"email,omitempty" db:"email"`
+	Password        string            `json:"-" db:"password"`
+	OrganizationIDs []gocql.UUID      `json:"organization_ids,omitempty" db:"organization_ids"`
+	Extra           map[string]string `json:"extra,omitempty" db:"extra"`
 }
 
-func (u *User) SignUp(form *forms.UserSignUp) (*User, error) {
+type Users struct {
+	Count         int     `json:"count,omitempty"`
+	Results       []*User `json:"results,omitempty"`
+	NextPageToken []byte  `json:"next_page_token,omitempty"`
+}
+
+func (u *User) CreateTable() error {
+	query := `CREATE TABLE IF NOT EXISTS user (
+					uuid            uuid primary key,
+					is_active 		boolean,
+					username        text,
+					password        text,
+					url             text,
+					organization_id uuid,
+					extra           map<text, text>,
+					created_at 		timestamp,
+					updated_at 		timestamp,
+					deleted_at 		timestamp,
+				) WITH  COMMENT = 'contains info about user';`
+	session := db.GetSession()
+	err := session.ExecStmt(query)
+	if err != nil {
+		return err
+	}
+	query = `CREATE INDEX IF NOT EXISTS user_org_id_idx ON user (organization_id);`
+	return session.ExecStmt(query)
+}
+
+func (u *User) Add(form *forms.User) (*User, error) {
 	user := User{
-		ID:       gocql.UUIDFromTime(time.Now()),
 		Password: form.Password,
 		Name:     form.Name,
 		Email:    form.Email,
 		Phone:    form.Phone,
-		Country:  form.Country,
-		Active:   true,
 	}
+	user.createInstance()
 
 	if exists, err := user.isExists(); exists {
 		return nil, err
@@ -66,7 +92,7 @@ func (u *User) SignUp(form *forms.UserSignUp) (*User, error) {
 }
 
 func (u *User) GetByID(id gocql.UUID) (*User, error) {
-	user := User{ID: id}
+	user := User{base: base{UUID: id}}
 	session := db.GetSession()
 	err := session.Query(userTable.Get()).BindStruct(user).GetRelease(&user)
 	if err != nil {
@@ -111,7 +137,7 @@ func (u *User) LoginCheck(form *forms.Login) (string, error) {
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		return "", err
 	}
-	return token.Generate(user.ID)
+	return token.Generate(user.UUID)
 }
 
 func (u *User) isExists() (bool, error) {
