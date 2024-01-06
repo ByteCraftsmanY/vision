@@ -27,7 +27,7 @@ var userMetaData = table.Metadata{
 var userTable = table.New(userMetaData)
 
 type User struct {
-	base
+	Base
 	Name            string            `json:"name,omitempty" db:"name"`
 	Phone           string            `json:"phone,omitempty" db:"phone"`
 	Email           string            `json:"email,omitempty" db:"email"`
@@ -71,7 +71,7 @@ func (u *User) Add(form *forms.User) (*User, error) {
 		Email:    form.Email,
 		Phone:    form.Phone,
 	}
-	user.createInstance()
+	user.Initialize()
 
 	if exists, err := user.isExists(); exists {
 		return nil, err
@@ -92,7 +92,7 @@ func (u *User) Add(form *forms.User) (*User, error) {
 }
 
 func (u *User) GetByID(id gocql.UUID) (*User, error) {
-	user := User{base: base{UUID: id}}
+	user := User{Base: Base{UUID: id}}
 	session := db.GetSession()
 	err := session.Query(userTable.Get()).BindStruct(user).GetRelease(&user)
 	if err != nil {

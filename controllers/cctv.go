@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"strings"
 	"vision/forms"
-	"vision/models"
+	"vision/services"
 )
 
 type CCTVController struct{}
 
-var cctvModel = new(models.CCTV)
+var cctvService = new(services.CCTVService)
 
 func (c *CCTVController) Add(ctx *gin.Context) {
 	form := new(forms.CCTV)
@@ -21,7 +21,7 @@ func (c *CCTVController) Add(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	cctv, err := cctvModel.Add(form)
+	cctv, err := cctvService.Add(form)
 	if err != nil && strings.Contains(err.Error(), "exists") {
 		ctx.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
@@ -40,7 +40,7 @@ func (c *CCTVController) Get(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := cctvModel.GetByID(uuid)
+	user, err := cctvService.GetByID(uuid)
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return
@@ -58,7 +58,7 @@ func (c *CCTVController) GetAll(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := cctvModel.GetAll(form)
+	result, err := cctvService.GetAll(form)
 	if err != nil {
 		zap.L().Error("Got error while retrieving users", zap.Error(err))
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -74,7 +74,7 @@ func (c *CCTVController) Update(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := cctvModel.Update(form)
+	user, err := cctvService.Update(form)
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return
@@ -93,7 +93,7 @@ func (c *CCTVController) Delete(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err = cctvModel.Remove(uuid)
+	err = cctvService.Remove(uuid)
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return

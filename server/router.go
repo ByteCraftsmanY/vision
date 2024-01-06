@@ -46,9 +46,9 @@ func NewRouter(logger *zap.Logger) *gin.Engine {
 			cctvGroup.DELETE("/:ID", cctv.Delete)
 		}
 
-		organizationGroup := v1.Group("organization")
+		organizationGroup := v1.Group("org")
 		{
-			organization := new(controllers.OrganizationController)
+			organization := new(controllers.OrgController)
 			organizationGroup.GET("/:ID", organization.Get)
 			organizationGroup.Any("/all", organization.GetAll)
 			organizationGroup.POST("/", organization.Add)

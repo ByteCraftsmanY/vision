@@ -7,4 +7,7 @@ database:
 jwt:
   secret: test
   expiry: 15
+kafka:
+  brokers:
+    - localhost
 

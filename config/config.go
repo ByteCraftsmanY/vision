@@ -16,6 +16,7 @@ type Configurations struct {
 	Server      ServerConfigurations
 	Database    DatabaseConfigurations
 	JWT         JWTConfigurations
+	Kafka       KafkaConfigurations
 }
 
 type ServerConfigurations struct {
@@ -30,6 +31,11 @@ type DatabaseConfigurations struct {
 type JWTConfigurations struct {
 	Secret string
 	Expiry int
+}
+
+type KafkaConfigurations struct {
+	DefaultTopic string
+	Brokers      []string
 }
 
 func (c Configurations) IsProductionEnvironment() bool {
