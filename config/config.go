@@ -8,7 +8,7 @@ import (
 	"github.com/knadh/koanf/v2"
 	"os"
 	"strings"
-	"vision/constants"
+	"vision/constants/enums"
 )
 
 type Configurations struct {
@@ -39,7 +39,7 @@ type KafkaConfigurations struct {
 }
 
 func (c Configurations) IsProductionEnvironment() bool {
-	return strings.EqualFold(c.Environment, constants.EnvProduction.String())
+	return strings.EqualFold(c.Environment, enums.EnvProduction.String())
 }
 
 var config Configurations

@@ -1,85 +1,52 @@
 package services
 
 import (
-	"github.com/gocql/gocql"
-	"github.com/scylladb/gocqlx/v2/table"
-	"vision/db"
-	"vision/forms"
-	"vision/models"
+	"vision/entities"
+	"vision/repositories"
+	"vision/types"
 )
 
-var (
-	orgMetaData = table.Metadata{
-		Name: "organization",
-		Columns: []string{
-			"uuid", "is_active",
-			"type", "admin_id",
-			"name", "contact", "address",
-			"cctv_count", "user_count", "bill_amount",
-			"created_at", "updated_at", "deleted_at",
-		},
-		PartKey: []string{"uuid"},
-		SortKey: nil,
-	}
-	orgTable = table.New(orgMetaData)
-)
-
-type OrgService struct{}
-
-func (s *OrgService) CreateTable() error {
-	session := db.GetSession()
-	query := `CREATE TABLE IF NOT EXISTS organization (	
-				    uuid uuid PRIMARY KEY, 
-				    is_active boolean,
-				    type varchar, 
-				    name text, 
-				    address text,
-				    contact varchar, 
-				    cctv_count int,
-				    user_count int,
-				    bill_amount bigint,
-				    admin_id uuid,
-				    created_at timestamp,
-					updated_at timestamp,
-					deleted_at timestamp
-				) WITH COMMENT = 'contains info about organization_id';`
-	err := session.ExecStmt(query)
-	if err != nil {
-		return err
-	}
-	query = `CREATE INDEX IF NOT EXISTS org_user_id_idx ON organization (admin_id);`
-	return session.ExecStmt(query)
+type OrganizationService interface {
+	GetOrganizations() ([]*entities.Organization, error)
+	GetOrganizationByID(userID *types.ID) (*entities.Organization, error)
+	CreateNewOrganization(data *entities.Organization) (*entities.Organization, error)
+	DeleteOrganizationByID(userID *types.ID) error
 }
 
-func (s *OrgService) Add(form *forms.OrganizationNew) (*models.Org, error) {
-	organization := models.Org{
-		Name:    form.Name,
-		Contact: form.Contact,
-		Type:    form.Type,
-		Address: form.Address,
-		AdminID: form.AdminID,
+type organizationService struct {
+	OrganizationRepository repositories.OrganizationRepositoryInterface
+}
+
+func NewOrganizationService(
+	organizationRepository repositories.OrganizationRepositoryInterface,
+) OrganizationService {
+	return &organizationService{
+		OrganizationRepository: organizationRepository,
 	}
+}
+
+func (o *organizationService) GetOrganizations() ([]*entities.Organization, error) {
+	return o.OrganizationRepository.FindAll()
+}
+
+func (o *organizationService) GetOrganizationByID(organizationID *types.ID) (*entities.Organization, error) {
+	return o.OrganizationRepository.FindByID(organizationID)
+}
+
+func (o *organizationService) CreateNewOrganization(organization *entities.Organization) (*entities.Organization, error) {
 	organization.Initialize()
-	session := db.GetSession()
-	err := session.Query(orgTable.Insert()).BindStruct(organization).ExecRelease()
-	return &organization, err
+	err := o.OrganizationRepository.Save(organization)
+	return organization, err
 }
 
-func (s *OrgService) GetByID(id gocql.UUID) (*models.Org, error) {
-	organization := models.Org{
-		Base: models.Base{UUID: id},
-	}
-	session := db.GetSession()
-	err := session.Query(orgTable.Get()).BindStruct(organization).GetRelease(&organization)
-	if err != nil {
-		return nil, err
-	}
-	return &organization, nil
+func (o *organizationService) DeleteOrganizationByID(organizationID *types.ID) error {
+	organization := &entities.Organization{Base: entities.Base{ID: organizationID}}
+	return o.OrganizationRepository.Delete(organization)
 }
 
-func (s *OrgService) GetAll(form *forms.OrganizationPagination) (*models.OrgList, error) {
-	organizationList := make([]*models.Org, 0)
-	organization := models.Org{
+/*func (s *OrgService) GetAll(form *dtos.OrganizationPagination) (*entities.OrgList, error) {
+	organizationList := make([]*entities.Org, 0)
+	organization := entities.Org{
 		Contact: form.Contact,
 		Type:    form.Type,
 		AdminID: form.AdminID,
@@ -90,16 +57,16 @@ func (s *OrgService) GetAll(form *forms.OrganizationPagination) (*models.OrgList
 
 	iter := query.Iter()
 	err := iter.Select(&organizationList)
-	return &models.OrgList{
+	return &entities.OrgList{
 		Count:         len(organizationList),
 		Results:       organizationList,
 		NextPageToken: iter.PageState(),
 	}, err
 }
 
-func (s *OrgService) Update(form *forms.OrganizationEdit) (*models.Org, error) {
-	organization := models.Org{
-		Base: models.Base{UUID: form.OrganizationID},
+func (s *OrgService) Update(form *dtos.OrganizationEdit) (*entities.Org, error) {
+	organization := entities.Org{
+		Base: entities.Base{ID: form.OrganizationID},
 	}
 	organization.Update()
 	columns := []string{"name", "contact", "admin_id"}
@@ -107,11 +74,4 @@ func (s *OrgService) Update(form *forms.OrganizationEdit) (*models.Org, error) {
 	err := session.Query(orgTable.Update(columns...)).BindStruct(&organization).ExecRelease()
 	return &organization, err
 }
-
-func (s *OrgService) Remove(id gocql.UUID) error {
-	organization := models.Org{Base: models.Base{UUID: id}}
-	organization.Delete()
-	session := db.GetSession()
-	err := session.Query(orgTable.Delete()).BindStruct(organization).ExecRelease()
-	return err
-}
+*/
