@@ -4,17 +4,17 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+	"vision/daos"
 	"vision/dtos"
-	"vision/entities"
 	"vision/repositories"
 	"vision/types"
 )
 
 type AuthService interface {
-	GetAuth(data *entities.Auth) (*entities.Auth, error)
-	GetAuthByPhone(phone string) (*entities.Auth, error)
-	CreateNewAuth(data *entities.Auth) (*entities.Auth, error)
-	CreateNewAuthWithTTL(form *dtos.OTPCreateRequest, duration time.Duration) (*entities.Auth, error)
+	GetAuth(data *daos.Auth) (*daos.Auth, error)
+	GetAuthByPhone(phone string) (*daos.Auth, error)
+	CreateNewAuth(data *daos.Auth) (*daos.Auth, error)
+	CreateNewAuthWithTTL(form *dtos.OTPCreateRequest, duration time.Duration) (*daos.Auth, error)
 	DeleteAuth(userID *types.ID) error
 }
 
@@ -30,25 +30,25 @@ type authService struct {
 	AuthRepository repositories.AuthRepositoryInterface
 }
 
-func (s *authService) GetAuthByPhone(phone string) (*entities.Auth, error) {
-	return s.AuthRepository.Find(&entities.Auth{Phone: phone})
+func (s *authService) GetAuthByPhone(phone string) (*daos.Auth, error) {
+	return s.AuthRepository.Find(&daos.Auth{Phone: phone})
 }
 
-func (s *authService) GetAuth(data *entities.Auth) (*entities.Auth, error) {
+func (s *authService) GetAuth(data *daos.Auth) (*daos.Auth, error) {
 	return s.AuthRepository.Find(data)
 }
 
-func (s *authService) CreateNewAuth(data *entities.Auth) (*entities.Auth, error) {
+func (s *authService) CreateNewAuth(data *daos.Auth) (*daos.Auth, error) {
 	//data.Initialize()
 	err := s.AuthRepository.Save(data)
 	return data, err
 }
 
-func (s *authService) CreateNewAuthWithTTL(form *dtos.OTPCreateRequest, duration time.Duration) (*entities.Auth, error) {
+func (s *authService) CreateNewAuthWithTTL(form *dtos.OTPCreateRequest, duration time.Duration) (*daos.Auth, error) {
 	//data.Initialize()
 	currentTime := time.Now()
 	randomNumber := rand.Intn(9000) + 1000
-	data := &entities.Auth{
+	data := &daos.Auth{
 		Phone:     form.Phone,
 		Code:      strconv.Itoa(randomNumber),
 		CreatedAt: &currentTime,
@@ -58,6 +58,6 @@ func (s *authService) CreateNewAuthWithTTL(form *dtos.OTPCreateRequest, duration
 }
 
 func (s *authService) DeleteAuth(id *types.ID) error {
-	data := entities.Auth{}
+	data := daos.Auth{}
 	return s.AuthRepository.Delete(&data)
 }

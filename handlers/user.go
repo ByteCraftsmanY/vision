@@ -10,32 +10,32 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"vision/daos"
 	"vision/db"
 	"vision/dtos"
-	"vision/entities"
 	"vision/repositories"
 	"vision/services"
 	"vision/utils/token"
 )
 
-type UserController struct {
+type UserHandler struct {
 	UserService         services.UserService
 	OrganizationService services.OrganizationService
 }
 
-func NewUserController() *UserController {
+func NewUserHandler() *UserHandler {
 	userRepository := repositories.NewUserRepository(db.GetSession())
 	organizationRepository := repositories.NewOrganizationRepository(db.GetSession())
 
 	userService := services.NewUserService(userRepository)
 	organizationService := services.NewOrganizationService(organizationRepository)
-	return &UserController{
+	return &UserHandler{
 		UserService:         userService,
 		OrganizationService: organizationService,
 	}
 }
 
-func (c UserController) Retrieve(ctx *gin.Context) {
+func (c UserHandler) Retrieve(ctx *gin.Context) {
 	id, err := token.ExtractUserID(ctx)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -53,7 +53,7 @@ func (c UserController) Retrieve(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusOK, user)
 }
 
-func (c UserController) Store(ctx *gin.Context) {
+func (c UserHandler) Store(ctx *gin.Context) {
 	form := new(dtos.UserForm)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -67,7 +67,7 @@ func (c UserController) Store(ctx *gin.Context) {
 	}
 
 	user, err := c.UserService.CreateNewUser(
-		&entities.User{
+		&daos.User{
 			Password: form.Password,
 			Name:     form.Name,
 			Email:    form.Email,
@@ -89,7 +89,7 @@ func (c UserController) Store(ctx *gin.Context) {
 func isUserExists(s services.UserService, form *dtos.UserForm) error {
 	type userErr struct {
 		Type string
-		User *entities.User
+		User *daos.User
 		Err  error
 	}
 

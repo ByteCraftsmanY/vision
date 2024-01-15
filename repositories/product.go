@@ -3,15 +3,15 @@ package repositories
 import (
 	"github.com/scylladb/gocqlx/v2"
 	"github.com/scylladb/gocqlx/v2/table"
-	"vision/entities"
+	"vision/daos"
 	"vision/types"
 )
 
 type ProductRepositoryInterface interface {
-	FindAll() []*entities.Product
-	FindByID(id *types.ID) (*entities.Product, error)
-	Save(product *entities.Product) (*entities.Product, error)
-	Delete(product *entities.Product) error
+	FindAll() []*daos.Product
+	FindByID(id *types.ID) (*daos.Product, error)
+	Save(product *daos.Product) (*daos.Product, error)
+	Delete(product *daos.Product) error
 }
 
 type productRepository struct {
@@ -20,7 +20,7 @@ type productRepository struct {
 }
 
 func NewProductRepository(session *gocqlx.Session) ProductRepositoryInterface {
-	product := new(entities.Product)
+	product := new(daos.Product)
 	metaData := product.GetTableMetaData()
 	return &productRepository{
 		session: session,
@@ -28,13 +28,13 @@ func NewProductRepository(session *gocqlx.Session) ProductRepositoryInterface {
 	}
 }
 
-func (p *productRepository) FindAll() []*entities.Product {
+func (p *productRepository) FindAll() []*daos.Product {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *productRepository) FindByID(id *types.ID) (*entities.Product, error) {
-	product := entities.Product{Base: entities.Base{ID: id}}
+func (p *productRepository) FindByID(id *types.ID) (*daos.Product, error) {
+	product := daos.Product{Base: daos.Base{ID: id}}
 	query := p.session.Query(p.table.Get()).BindStruct(product)
 	defer query.Release()
 
@@ -42,7 +42,7 @@ func (p *productRepository) FindByID(id *types.ID) (*entities.Product, error) {
 	return &product, err
 }
 
-func (p *productRepository) Save(product *entities.Product) (*entities.Product, error) {
+func (p *productRepository) Save(product *daos.Product) (*daos.Product, error) {
 	query := p.session.Query(p.table.Insert()).BindStruct(product)
 	defer query.Release()
 
@@ -50,7 +50,7 @@ func (p *productRepository) Save(product *entities.Product) (*entities.Product, 
 	return product, err
 }
 
-func (p *productRepository) Delete(product *entities.Product) error {
+func (p *productRepository) Delete(product *daos.Product) error {
 	query := p.session.Query(p.table.Delete()).BindStruct(product)
 	defer query.Release()
 

@@ -2,17 +2,17 @@ package services
 
 import (
 	"golang.org/x/crypto/bcrypt"
-	"vision/entities"
+	"vision/daos"
 	"vision/repositories"
 	"vision/types"
 )
 
 type UserService interface {
-	GetUsers() []*entities.User
-	GetUserByID(userID *types.ID) (*entities.User, error)
-	GetUserByPhone(phone string) (*entities.User, error)
-	GetUserByEmail(email string) (*entities.User, error)
-	CreateNewUser(data *entities.User) (*entities.User, error)
+	GetUsers() []*daos.User
+	GetUserByID(userID *types.ID) (*daos.User, error)
+	GetUserByPhone(phone string) (*daos.User, error)
+	GetUserByEmail(email string) (*daos.User, error)
+	CreateNewUser(data *daos.User) (*daos.User, error)
 	DeleteUser(userID *types.ID) error
 }
 
@@ -28,25 +28,25 @@ func NewUserService(
 	}
 }
 
-func (s *userService) GetUsers() []*entities.User {
+func (s *userService) GetUsers() []*daos.User {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *userService) GetUserByID(userID *types.ID) (*entities.User, error) {
+func (s *userService) GetUserByID(userID *types.ID) (*daos.User, error) {
 	return s.UserRepository.FindByID(userID)
 }
 
-func (s *userService) GetUserByPhone(phone string) (*entities.User, error) {
-	return s.UserRepository.FindByPhoneOrEmail(&entities.User{Phone: phone})
+func (s *userService) GetUserByPhone(phone string) (*daos.User, error) {
+	return s.UserRepository.FindByPhoneOrEmail(&daos.User{Phone: phone})
 
 }
 
-func (s *userService) GetUserByEmail(email string) (*entities.User, error) {
-	return s.UserRepository.FindByPhoneOrEmail(&entities.User{Email: email})
+func (s *userService) GetUserByEmail(email string) (*daos.User, error) {
+	return s.UserRepository.FindByPhoneOrEmail(&daos.User{Email: email})
 }
 
-func (s *userService) CreateNewUser(user *entities.User) (*entities.User, error) {
+func (s *userService) CreateNewUser(user *daos.User) (*daos.User, error) {
 	user.Initialize()
 	passBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -62,6 +62,6 @@ func (s *userService) CreateNewUser(user *entities.User) (*entities.User, error)
 }
 
 func (s *userService) DeleteUser(userID *types.ID) error {
-	user := &entities.User{Base: entities.Base{ID: userID}}
+	user := &daos.User{Base: daos.Base{ID: userID}}
 	return s.UserRepository.Delete(user)
 }

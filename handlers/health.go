@@ -10,27 +10,26 @@ import (
 	"vision/kafka"
 )
 
-type HealthController struct {
+type HealthHandler struct {
 	client  *kgo.Client
 	session *gocqlx.Session
 }
 
-func NewHealthController() *HealthController {
-	client := kafka.GetClient()
-	session := db.GetSession()
-	return &HealthController{
-		client:  client,
-		session: session,
+func NewHealthHandler() *HealthHandler {
+	return &HealthHandler{
+		client:  kafka.GetClient(),
+		session: db.GetSession(),
 	}
 }
 
-func (c *HealthController) Status(ctx *gin.Context) {
-	//kafkaErr := c.client.Ping(ctx)
+func (c *HealthHandler) Status(ctx *gin.Context) {
+	kafkaErr := c.client.Ping(ctx)
 	dbStatus := c.session.Closed()
 	health := dtos.HealthDTO{
-		Status:   http.StatusOK,
-		DBStatus: !dbStatus,
-		//KafkaStatus: kafkaErr != nil,
+		Status:      http.StatusOK,
+		Message:     "Success",
+		DBStatus:    !dbStatus,
+		KafkaStatus: kafkaErr == nil,
 	}
 	ctx.AbortWithStatusJSON(http.StatusOK, health)
 }

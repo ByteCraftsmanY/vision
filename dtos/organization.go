@@ -10,8 +10,8 @@ type OrganizationForm struct {
 	AssociatedUserID *types.ID `json:"associated_user_id,omitempty" binding:"required"`
 }
 
-/*func (o *OrganizationForm) ConvertToEntity() *entities.Organization {
-	return &entities.Organization{
+/*func (o *OrganizationForm) ConvertToEntity() *daos.Organization {
+	return &daos.Organization{
 		Name:    o.Name,
 		Contact: o.Contact,
 		Type:    o.Type,

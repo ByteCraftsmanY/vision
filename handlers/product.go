@@ -7,39 +7,39 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
+	"vision/daos"
 	"vision/db"
 	"vision/dtos"
-	"vision/entities"
 	"vision/repositories"
 	"vision/services"
 	"vision/types"
 )
 
-type ProductController struct {
+type ProductHandler struct {
 	ProductService services.ProductService
 }
 
-func NewProductController() *ProductController {
+func NewProductHandler() *ProductHandler {
 	productRepo := repositories.NewProductRepository(db.GetSession())
 	productService := services.NewProductService(productRepo)
-	return &ProductController{
+	return &ProductHandler{
 		ProductService: productService,
 	}
 }
 
-func (c *ProductController) Add(ctx *gin.Context) {
+func (c *ProductHandler) Add(ctx *gin.Context) {
 	form := new(dtos.ProductForm)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	cctv, err := c.ProductService.CreateNewProduct(
-		&entities.Product{
+		&daos.Product{
 			Username:       form.UserName,
 			Password:       form.Password,
 			URL:            form.URL,
 			OrganizationID: form.OrganizationID,
-			Base:           entities.Base{Extra: form.Extra},
+			Base:           daos.Base{Extra: form.Extra},
 		},
 	)
 	if err != nil && strings.Contains(err.Error(), "exists") {
@@ -53,7 +53,7 @@ func (c *ProductController) Add(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusCreated, cctv)
 }
 
-func (c *ProductController) Get(ctx *gin.Context) {
+func (c *ProductHandler) Get(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := types.ParseID(idStr)
 	if err != nil {
@@ -73,7 +73,7 @@ func (c *ProductController) Get(ctx *gin.Context) {
 }
 
 /*
-func (c *ProductController) GetAll(ctx *gin.Context) {
+func (c *ProductHandler) GetAll(ctx *gin.Context) {
 	form := new(dtos.CCTVPagination)
 	if err := ctx.ShouldBindJSON(form); !strings.EqualFold(ctx.Request.Method, http.MethodGet) && err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -89,7 +89,7 @@ func (c *ProductController) GetAll(ctx *gin.Context) {
 	return
 }
 
-func (c *ProductController) Update(ctx *gin.Context) {
+func (c *ProductHandler) Update(ctx *gin.Context) {
 	form := new(dtos.CCTVEdit)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -107,7 +107,7 @@ func (c *ProductController) Update(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusOK, user)
 }
 
-func (c *ProductController) Delete(ctx *gin.Context) {
+func (c *ProductHandler) Delete(ctx *gin.Context) {
 	id := ctx.Param("ID")
 	uuid, err := gocql.ParseUUID(id)
 	if err != nil {

@@ -16,12 +16,12 @@ import (
 	"vision/utils/token"
 )
 
-type AuthController struct {
+type AuthHandler struct {
 	AuthService services.AuthService
 	UserService services.UserService
 }
 
-func NewAuthController() *AuthController {
+func NewAuthHandler() *AuthHandler {
 	session := db.GetSession()
 
 	authRepository := repositories.NewAuthRepository(session)
@@ -29,13 +29,13 @@ func NewAuthController() *AuthController {
 
 	authService := services.NewAuthService(authRepository)
 	userService := services.NewUserService(userRepository)
-	return &AuthController{
+	return &AuthHandler{
 		AuthService: authService,
 		UserService: userService,
 	}
 }
 
-func (c *AuthController) Login(ctx *gin.Context) {
+func (c *AuthHandler) Login(ctx *gin.Context) {
 	form := new(dtos.Login)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -74,7 +74,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	)
 }
 
-func (c *AuthController) GenerateOTP(ctx *gin.Context) {
+func (c *AuthHandler) GenerateOTP(ctx *gin.Context) {
 	form := new(dtos.OTPCreateRequest)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -93,7 +93,7 @@ func (c *AuthController) GenerateOTP(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusCreated, auth)
 }
 
-func (c *AuthController) VerifyOTP(ctx *gin.Context) {
+func (c *AuthHandler) VerifyOTP(ctx *gin.Context) {
 	form := new(dtos.OTPVerifyRequest)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})

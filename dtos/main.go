@@ -1,6 +1,6 @@
 package dtos
 
-/*func GetOrganizationUserDTOFromOrganizationAndUserEntity(user *entities.User, organization *entities.Organization) *OrganizationUserDTO {
+/*func GetOrganizationUserDTOFromOrganizationAndUserEntity(user *daos.User, organization *daos.Organization) *OrganizationUserDTO {
 	return &OrganizationUserDTO{
 		Base: Base{
 			ID:        organization.ID,

@@ -1,4 +1,4 @@
-package entities
+package daos
 
 import (
 	"github.com/scylladb/gocqlx/v2/table"
@@ -25,10 +25,4 @@ func (p Product) GetTableMetaData() table.Metadata {
 
 func (p Product) UpdatableKeys() []string {
 	return nil
-}
-
-type CCTVList struct {
-	Count         int        `json:"count,omitempty"`
-	Results       []*Product `json:"results,omitempty"`
-	NextPageToken []byte     `json:"next_page_token,omitempty"`
 }

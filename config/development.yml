@@ -8,6 +8,7 @@ jwt:
   secret: test
   expiry: 15
 kafka:
+  defaultTopic: test
   brokers:
-    - localhost
+    - localhost:29092
 

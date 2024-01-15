@@ -10,6 +10,6 @@ type UserForm struct {
 type UserDTO struct {
 }
 
-//func (u *UserDTO) ConvertToEntity(entity *entities.User) {
+//func (u *UserDTO) ConvertToEntity(entity *daos.User) {
 //
 //}

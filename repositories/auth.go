@@ -4,16 +4,16 @@ import (
 	"github.com/scylladb/gocqlx/v2"
 	"github.com/scylladb/gocqlx/v2/table"
 	"time"
-	"vision/entities"
+	"vision/daos"
 	"vision/types"
 )
 
 type AuthRepositoryInterface interface {
-	FindByID(id *types.ID) (*entities.Auth, error)
-	Find(data *entities.Auth) (*entities.Auth, error)
-	Save(auth *entities.Auth) error
-	SaveWithTTL(auth *entities.Auth, duration time.Duration) error
-	Delete(auth *entities.Auth) error
+	FindByID(id *types.ID) (*daos.Auth, error)
+	Find(data *daos.Auth) (*daos.Auth, error)
+	Save(auth *daos.Auth) error
+	SaveWithTTL(auth *daos.Auth, duration time.Duration) error
+	Delete(auth *daos.Auth) error
 }
 
 type authRepository struct {
@@ -22,7 +22,7 @@ type authRepository struct {
 }
 
 func NewAuthRepository(session *gocqlx.Session) AuthRepositoryInterface {
-	auth := new(entities.Auth)
+	auth := new(daos.Auth)
 	metaData := auth.GetTableMetaData()
 	return &authRepository{
 		session: session,
@@ -30,9 +30,9 @@ func NewAuthRepository(session *gocqlx.Session) AuthRepositoryInterface {
 	}
 }
 
-func (r *authRepository) FindByID(id *types.ID) (*entities.Auth, error) {
-	auth := entities.Auth{
-		//Base: entities.Base{ID: id},
+func (r *authRepository) FindByID(id *types.ID) (*daos.Auth, error) {
+	auth := daos.Auth{
+		//Base: daos.Base{ID: id},
 	}
 	query := r.session.Query(r.table.Select()).BindStruct(auth)
 	defer query.Release()
@@ -41,7 +41,7 @@ func (r *authRepository) FindByID(id *types.ID) (*entities.Auth, error) {
 	return &auth, err
 }
 
-func (r *authRepository) Find(auth *entities.Auth) (*entities.Auth, error) {
+func (r *authRepository) Find(auth *daos.Auth) (*daos.Auth, error) {
 	query := r.session.Query(r.table.Select()).BindStruct(auth)
 	defer query.Release()
 
@@ -49,19 +49,19 @@ func (r *authRepository) Find(auth *entities.Auth) (*entities.Auth, error) {
 	return auth, err
 }
 
-func (r *authRepository) Save(auth *entities.Auth) error {
+func (r *authRepository) Save(auth *daos.Auth) error {
 	query := r.session.Query(r.table.Insert()).BindStruct(auth)
 	defer query.Release()
 	return query.Exec()
 }
 
-func (r *authRepository) SaveWithTTL(auth *entities.Auth, duration time.Duration) error {
+func (r *authRepository) SaveWithTTL(auth *daos.Auth, duration time.Duration) error {
 	query := r.session.Query(r.table.InsertBuilder().TTL(duration).ToCql()).BindStruct(auth)
 	defer query.Release()
 	return query.Exec()
 }
 
-func (r *authRepository) Delete(auth *entities.Auth) error {
+func (r *authRepository) Delete(auth *daos.Auth) error {
 	query := r.session.Query(r.table.Delete()).BindStruct(auth)
 	defer query.Release()
 

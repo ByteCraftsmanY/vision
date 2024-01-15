@@ -10,10 +10,17 @@ import (
 	"vision/config"
 )
 
-func Init(lc fx.Lifecycle, logger *zap.Logger, config *config.Configurations) *http.Server {
-	r := NewRouter(logger)
+type Params struct {
+	fx.In
+
+	Config *config.Configurations
+	Logger *zap.Logger
+}
+
+func Init(lc fx.Lifecycle, params Params) *http.Server {
+	r := NewRouter(&params)
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.Server.Port),
+		Addr:    fmt.Sprintf(":%d", params.Config.Server.Port),
 		Handler: r,
 	}
 	lc.Append(fx.Hook{

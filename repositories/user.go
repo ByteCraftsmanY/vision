@@ -4,16 +4,16 @@ import (
 	"github.com/scylladb/gocqlx/v2"
 	"github.com/scylladb/gocqlx/v2/qb"
 	"github.com/scylladb/gocqlx/v2/table"
-	"vision/entities"
+	"vision/daos"
 	"vision/types"
 )
 
 type UserRepositoryInterface interface {
-	FindAll() []*entities.User
-	FindByID(id *types.ID) (*entities.User, error)
-	FindByPhoneOrEmail(user *entities.User) (*entities.User, error)
-	Save(user *entities.User) error
-	Delete(user *entities.User) error
+	FindAll() []*daos.User
+	FindByID(id *types.ID) (*daos.User, error)
+	FindByPhoneOrEmail(user *daos.User) (*daos.User, error)
+	Save(user *daos.User) error
+	Delete(user *daos.User) error
 }
 
 type userRepository struct {
@@ -22,7 +22,7 @@ type userRepository struct {
 }
 
 func NewUserRepository(session *gocqlx.Session) UserRepositoryInterface {
-	user := new(entities.User)
+	user := new(daos.User)
 	metaData := user.GetTableMetaData()
 	return &userRepository{
 		session: session,
@@ -30,13 +30,13 @@ func NewUserRepository(session *gocqlx.Session) UserRepositoryInterface {
 	}
 }
 
-func (r *userRepository) FindAll() []*entities.User {
+func (r *userRepository) FindAll() []*daos.User {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *userRepository) FindByID(userID *types.ID) (*entities.User, error) {
-	user := entities.User{Base: entities.Base{ID: userID}}
+func (r *userRepository) FindByID(userID *types.ID) (*daos.User, error) {
+	user := daos.User{Base: daos.Base{ID: userID}}
 	query := r.session.Query(r.table.Get()).BindStruct(user)
 	defer query.Release()
 
@@ -44,21 +44,21 @@ func (r *userRepository) FindByID(userID *types.ID) (*entities.User, error) {
 	return &user, err
 }
 
-func (r *userRepository) Save(user *entities.User) error {
+func (r *userRepository) Save(user *daos.User) error {
 	query := r.session.Query(r.table.Insert()).BindStruct(user)
 	defer query.Release()
 
 	return query.ExecRelease()
 }
 
-func (r *userRepository) Delete(user *entities.User) error {
+func (r *userRepository) Delete(user *daos.User) error {
 	query := r.session.Query(r.table.Delete()).BindStruct(user)
 	defer query.Release()
 
 	return query.ExecRelease()
 }
 
-func (r *userRepository) FindByPhoneOrEmail(user *entities.User) (*entities.User, error) {
+func (r *userRepository) FindByPhoneOrEmail(user *daos.User) (*daos.User, error) {
 	condition := qb.Eq("phone")
 	if len(user.Phone) == 0 {
 		condition = qb.Eq("email")

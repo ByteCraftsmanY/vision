@@ -7,9 +7,9 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
+	"vision/daos"
 	"vision/db"
 	"vision/dtos"
-	"vision/entities"
 	"vision/repositories"
 	"vision/services"
 	"vision/types"
@@ -46,7 +46,7 @@ func (o *OrganizationHandler) GetOrganizationByID(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	organization, user := new(entities.Organization), new(entities.User)
+	organization, user := new(daos.Organization), new(daos.User)
 	organization, err = o.organizationService.GetOrganizationByID(id)
 	if err == nil {
 		user, err = o.userService.GetUserByID(organization.AssociatedUserID)
@@ -71,7 +71,7 @@ func (o *OrganizationHandler) SaveOrganization(ctx *gin.Context) {
 	}
 
 	organization, err := o.organizationService.CreateNewOrganization(
-		&entities.Organization{
+		&daos.Organization{
 			Name:             form.Name,
 			Contact:          form.Contact,
 			Type:             form.Type,
@@ -97,13 +97,13 @@ func (o *OrganizationHandler) GetAllOrganizations(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	//result, err := c.organizationService.GetOrganizations()
-	//if err != nil {
-	//	zap.L().Error("Got error while retrieving users", zap.Error(err))
-	//	ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
-	//ctx.AbortWithStatusJSON(http.StatusOK, result)
+	result, err := o.organizationService.GetOrganizations()
+	if err != nil {
+		zap.L().Error("Got error while retrieving users", zap.Error(err))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.AbortWithStatusJSON(http.StatusOK, result)
 	return
 }
 
@@ -123,7 +123,7 @@ func (o *OrganizationHandler) UpdateOrganizationByID(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := o.organizationService.CreateNewOrganization(&entities.Organization{Base: entities.Base{ID: id}})
+	user, err := o.organizationService.CreateNewOrganization(&daos.Organization{Base: daos.Base{ID: id}})
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return
