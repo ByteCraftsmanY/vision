@@ -3,18 +3,17 @@ package server
 import (
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"time"
-	"vision/controllers"
+	"vision/handlers"
 	"vision/middlewares"
 )
 
-func NewRouter(logger *zap.Logger) *gin.Engine {
+func NewRouter(params *Params) *gin.Engine {
 	router := gin.New()
-	router.Use(ginzap.RecoveryWithZap(logger, true))
-	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
+	router.Use(ginzap.RecoveryWithZap(params.Logger, true))
+	router.Use(ginzap.Ginzap(params.Logger, time.RFC3339, true))
 
-	health := new(controllers.HealthController)
+	health := handlers.NewHealthHandler()
 	router.GET("/health", health.Status)
 
 	//router.Use(middlewares.AuthMiddleware())
@@ -24,13 +23,15 @@ func NewRouter(logger *zap.Logger) *gin.Engine {
 	{
 		authGroup := v1.Group("auth")
 		{
-			auth := new(controllers.AuthController)
+			auth := handlers.NewAuthHandler()
 			authGroup.POST("/", auth.Login)
+			authGroup.POST("/initiate", auth.GenerateOTP)
+			authGroup.POST("/verify", auth.VerifyOTP)
 		}
 
 		userGroup := v1.Group("user")
 		{
-			user := new(controllers.UserController)
+			user := handlers.NewUserHandler()
 			//userGroup.Get("/:id", user.Retrieve)
 			userGroup.GET("/", user.Retrieve, middlewares.AuthMiddleware())
 			userGroup.POST("/", user.Store)
@@ -38,22 +39,22 @@ func NewRouter(logger *zap.Logger) *gin.Engine {
 
 		cctvGroup := v1.Group("cctv")
 		{
-			cctv := new(controllers.CCTVController)
+			cctv := handlers.NewProductHandler()
 			cctvGroup.GET("/:ID", cctv.Get)
-			cctvGroup.Any("/all", cctv.GetAll)
-			cctvGroup.POST("/", cctv.Add)
-			cctvGroup.PUT("/", cctv.Update)
-			cctvGroup.DELETE("/:ID", cctv.Delete)
+			//cctvGroup.Any("/all", cctv.GetAll)
+			//cctvGroup.POST("/", cctv.Add)
+			//cctvGroup.PUT("/", cctv.Update)
+			//cctvGroup.DELETE("/:ID", cctv.Delete)
 		}
 
 		organizationGroup := v1.Group("organization")
 		{
-			organization := new(controllers.OrganizationController)
-			organizationGroup.GET("/:ID", organization.Get)
-			organizationGroup.Any("/all", organization.GetAll)
-			organizationGroup.POST("/", organization.Add)
-			organizationGroup.PUT("/", organization.Update)
-			organizationGroup.DELETE("/:ID", organization.Delete)
+			organization := handlers.NewOrganizationHandler()
+			organizationGroup.GET("/:id", organization.GetOrganizationByID)
+			organizationGroup.GET("/", organization.GetAllOrganizations)
+			organizationGroup.POST("/", organization.SaveOrganization)
+			organizationGroup.PATCH("/", organization.UpdateOrganizationByID)
+			organizationGroup.DELETE("/:id", organization.DeleteOrganizationByID)
 		}
 
 	}

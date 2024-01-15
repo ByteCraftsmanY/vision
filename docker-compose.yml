@@ -1,12 +1,44 @@
 version: "3.8"
 
 services:
-  vision:
-    build: ./
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
     environment:
-      - SECRET=rdx123
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "8080:8080"
+      - 22181:2181
+    volumes:
+      - ./.data/zoo/data:/var/lib/zookeeper/data
+      - ./.data/zoo/log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./.data/kafka/data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - kafka
+    ports:
+      - 8090:8080
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
   scylla:
     container_name: scylla
     image: scylladb/scylla:latest
@@ -14,7 +46,21 @@ services:
     ports:
       - "9042:9042"
     volumes:
-      - ./.db_data/scylla1:/var/lib/scylla/data
+      - ./.data/scylla1:/var/lib/scylla/data
+
+#  vision:
+#    build: ./
+#    environment:
+#      - SECRET=rdx123
+#    depends_on:
+#      - kafka
+#      - scylla
+#    ports:
+#      - "8080:8080"
 volumes:
   scylla:
+    driver: local
+  zookeeper:
+    driver: local
+  kafka:
     driver: local

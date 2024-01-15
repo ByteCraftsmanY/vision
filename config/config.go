@@ -8,7 +8,7 @@ import (
 	"github.com/knadh/koanf/v2"
 	"os"
 	"strings"
-	"vision/constants"
+	"vision/constants/enums"
 )
 
 type Configurations struct {
@@ -16,6 +16,7 @@ type Configurations struct {
 	Server      ServerConfigurations
 	Database    DatabaseConfigurations
 	JWT         JWTConfigurations
+	Kafka       KafkaConfigurations
 }
 
 type ServerConfigurations struct {
@@ -32,8 +33,13 @@ type JWTConfigurations struct {
 	Expiry int
 }
 
+type KafkaConfigurations struct {
+	DefaultTopic string
+	Brokers      []string
+}
+
 func (c Configurations) IsProductionEnvironment() bool {
-	return strings.EqualFold(c.Environment, constants.EnvProduction.String())
+	return strings.EqualFold(c.Environment, enums.EnvProduction.String())
 }
 
 var config Configurations

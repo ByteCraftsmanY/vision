@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"vision/config"
+	"vision/types"
 
-	"github.com/gocql/gocql"
 	"github.com/golang-jwt/jwt"
 	"strings"
 	"time"
 )
 
-func Generate(userID gocql.UUID) (string, error) {
+func Generate(userID *types.ID) (string, error) {
 	jwtConfig := config.GetConfig().JWT
 
 	//key, err := jwt.ParseRSAPrivateKeyFromPEM(jwtConfig.GetSecret())
@@ -53,7 +53,7 @@ func getToken(ctx *gin.Context) (*jwt.Token, error) {
 	})
 }
 
-func ExtractUserID(ctx *gin.Context) (userID gocql.UUID, err error) {
+func ExtractUserID(ctx *gin.Context) (userID *types.ID, err error) {
 	token, err := getToken(ctx)
 	if err != nil {
 		return
@@ -65,7 +65,7 @@ func ExtractUserID(ctx *gin.Context) (userID gocql.UUID, err error) {
 			err = errors.New("error while typecast userID")
 			return
 		}
-		userID, err = gocql.ParseUUID(strUserID)
+		userID, err = types.ParseID(strUserID)
 	}
 	return
 }

@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"errors"
@@ -7,21 +7,41 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
-	"vision/forms"
-	"vision/models"
+	"vision/daos"
+	"vision/db"
+	"vision/dtos"
+	"vision/repositories"
+	"vision/services"
+	"vision/types"
 )
 
-type CCTVController struct{}
+type ProductHandler struct {
+	ProductService services.ProductService
+}
 
-var cctvModel = new(models.CCTV)
+func NewProductHandler() *ProductHandler {
+	productRepo := repositories.NewProductRepository(db.GetSession())
+	productService := services.NewProductService(productRepo)
+	return &ProductHandler{
+		ProductService: productService,
+	}
+}
 
-func (c *CCTVController) Add(ctx *gin.Context) {
-	form := new(forms.CCTV)
+func (c *ProductHandler) Add(ctx *gin.Context) {
+	form := new(dtos.ProductForm)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	cctv, err := cctvModel.Add(form)
+	cctv, err := c.ProductService.CreateNewProduct(
+		&daos.Product{
+			Username:       form.UserName,
+			Password:       form.Password,
+			URL:            form.URL,
+			OrganizationID: form.OrganizationID,
+			Base:           daos.Base{Extra: form.Extra},
+		},
+	)
 	if err != nil && strings.Contains(err.Error(), "exists") {
 		ctx.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
@@ -33,14 +53,14 @@ func (c *CCTVController) Add(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusCreated, cctv)
 }
 
-func (c *CCTVController) Get(ctx *gin.Context) {
-	id := ctx.Param("ID")
-	uuid, err := gocql.ParseUUID(id)
+func (c *ProductHandler) Get(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := types.ParseID(idStr)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := cctvModel.GetByID(uuid)
+	user, err := c.ProductService.GetProductByID(id)
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return
@@ -52,13 +72,14 @@ func (c *CCTVController) Get(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusOK, user)
 }
 
-func (c *CCTVController) GetAll(ctx *gin.Context) {
-	form := new(forms.CCTVPagination)
+/*
+func (c *ProductHandler) GetAll(ctx *gin.Context) {
+	form := new(dtos.CCTVPagination)
 	if err := ctx.ShouldBindJSON(form); !strings.EqualFold(ctx.Request.Method, http.MethodGet) && err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := cctvModel.GetAll(form)
+	result, err := c.ProductService.GetProducts(form)
 	if err != nil {
 		zap.L().Error("Got error while retrieving users", zap.Error(err))
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -68,13 +89,13 @@ func (c *CCTVController) GetAll(ctx *gin.Context) {
 	return
 }
 
-func (c *CCTVController) Update(ctx *gin.Context) {
-	form := new(forms.CCTVEdit)
+func (c *ProductHandler) Update(ctx *gin.Context) {
+	form := new(dtos.CCTVEdit)
 	if err := ctx.ShouldBindJSON(form); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := cctvModel.Update(form)
+	user, err := c.ProductService.Update(form)
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return
@@ -86,14 +107,14 @@ func (c *CCTVController) Update(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusOK, user)
 }
 
-func (c *CCTVController) Delete(ctx *gin.Context) {
+func (c *ProductHandler) Delete(ctx *gin.Context) {
 	id := ctx.Param("ID")
 	uuid, err := gocql.ParseUUID(id)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err = cctvModel.Remove(uuid)
+	err = c.ProductService.Remove(uuid)
 	if errors.Is(err, gocql.ErrNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusNoContent, gin.H{"error": err.Error()})
 		return
@@ -104,3 +125,4 @@ func (c *CCTVController) Delete(ctx *gin.Context) {
 	}
 	ctx.AbortWithStatus(http.StatusNoContent)
 }
+*/
